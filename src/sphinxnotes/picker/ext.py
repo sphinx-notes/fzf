@@ -9,7 +9,7 @@ Sphinx extension implementation, but the entrypoint is located at __init__.py.
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import re
 from os import path
 import time
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from sphinx.application import Sphinx
     from sphinx.environment import BuildEnvironment
     from sphinx.config import Config as SphinxConfig
-    from collections.abc import Iterator
 
 from .config import Config
 from .snippets import Snippet, WithTitle, Document, Section, Code
@@ -166,12 +165,14 @@ class SnippetBuilder(DummyBuilder):  # DummyBuilder has dummy impls we need.
         'The snippet builder produces snippets (not to OUTPUTDIR) for use by snippet CLI tool'
     )
 
-    def get_outdated_docs(self) -> Iterator[str]:
+    @override
+    def get_outdated_docs(self) -> set[str]:
         """Modified from :py:meth:`sphinx.builders.html.StandaloneHTMLBuilder.get_outdated_docs`."""
+        outdated_docs = set()
         for docname in self.env.found_docs:
             if docname not in self.env.all_docs:
                 logger.debug('[build target] did not in env: %r', docname)
-                yield docname
+                outdated_docs.add(docname)
                 continue
 
             assert cache is not None
@@ -192,10 +193,11 @@ class SnippetBuilder(DummyBuilder):  # DummyBuilder has dummy impls we need.
                             path.getmtime(self.env.doc2path(docname))
                         ),
                     )
-                    yield docname
+                    outdated_docs.add(docname)
             except OSError:
                 # source doesn't exist anymore
                 pass
+        return outdated_docs
 
 
 def _format_modified_time(timestamp: float) -> str:
