@@ -175,7 +175,7 @@ class SnippetBuilder(DummyBuilder):  # DummyBuilder has dummy impls we need.
                 continue
 
             assert cache is not None
-            targetname = cache.itemfile((self.app.config.project, docname))
+            targetname = cache.itemfile((self.config.project, docname))
             try:
                 targetmtime = path.getmtime(targetname)
             except Exception:
